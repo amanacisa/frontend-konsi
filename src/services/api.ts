@@ -285,4 +285,51 @@ export const friendsAPI = {
   }
 };
 
+// Short Form API
+export const shortFormAPI = {
+  getAll: async (params?: any) => {
+    const response = await api.get('/short-form', { params });
+    return response.data;
+  },
+
+  getById: async (id: string) => {
+    const response = await api.get(`/short-form/${id}`);
+    return response.data;
+  },
+
+  create: async (data: {
+    title: string;
+    description: string;
+    video_url: string;
+    category: string;
+    tags: string[];
+  }) => {
+    const response = await api.post('/short-form', data);
+    return response.data;
+  },
+
+  like: async (id: string) => {
+    const response = await api.post(`/short-form/${id}/like`);
+    return response.data;
+  },
+
+  incrementView: async (id: string) => {
+    const response = await api.post(`/short-form/${id}/view`);
+    return response.data;
+  },
+
+  moderate: async (id: string, status: string, rejection_reason?: string) => {
+    const response = await api.put(`/short-form/${id}/moderate`, {
+      status,
+      rejection_reason
+    });
+    return response.data;
+  },
+
+  delete: async (id: string) => {
+    const response = await api.delete(`/short-form/${id}`);
+    return response.data;
+  }
+};
+
 export default api;

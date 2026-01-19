@@ -4,7 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Landing from './pages/Landing';
 import Chat from './pages/Chat';
 import News from './pages/News';
-import Report from './pages/Report';
+import ShortForm from './pages/ShortForm';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Forum from './pages/Forum';
@@ -45,10 +45,9 @@ function App() {
                 <News />
               </ProtectedRoute>
             } />
-            <Route path="/report" element={
+            <Route path="/short-form" element={
               <ProtectedRoute>
-                <Navigation />
-                <Report />
+                <ShortForm />
               </ProtectedRoute>
             } />
             <Route path="/forum" element={

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MessageCircle, Newspaper, FileText, Menu, X, LogOut, Shield, User, Home,Users, UserCircle } from 'lucide-react';
+import { MessageCircle, Newspaper, Video, Menu, X, LogOut, Shield, User, Home, Users, UserCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Navigation() {
@@ -15,7 +15,7 @@ export default function Navigation() {
     { path: '/', label: 'Beranda', icon: Home },
     { path: '/chat', label: 'LexTalk', icon: MessageCircle },
     { path: '/news', label: 'Berita', icon: Newspaper },
-    { path: '/report', label: 'Lapor', icon: FileText },
+    { path: '/short-form', label: 'Video', icon: Video },
     { path: '/forum', label: 'Forum', icon: Users },
     { path: '/friends', label: 'Teman', icon: UserCircle },
   ];

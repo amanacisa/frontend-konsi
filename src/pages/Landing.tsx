@@ -1,7 +1,7 @@
 
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { MessageCircle, Newspaper, FileText, Brain, Users, Shield, ChevronRight, UsersRound } from 'lucide-react';
+import { MessageCircle, Newspaper, Video, Brain, Users, Shield, ChevronRight, UsersRound } from 'lucide-react';
 
 export default function Landing() {
   return (
@@ -103,17 +103,17 @@ export default function Landing() {
           </Link>
 
           <Link
-            to="/report"
+            to="/short-form"
             className="group bg-white/10 backdrop-blur-md border border-white/20 p-6 sm:p-8 rounded-2xl hover:bg-white/20 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl sm:col-span-2 lg:col-span-1"
           >
             <div className="mb-4 sm:mb-6">
-              <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-accent-400 group-hover:scale-110 transition-transform duration-300" />
+              <Video className="w-10 h-10 sm:w-12 sm:h-12 text-accent-400 group-hover:scale-110 transition-transform duration-300" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 group-hover:text-accent-400 transition-colors duration-300">
-              Lex Tracker
+              Video Edukasi
             </h3>
             <p className="text-white/80 leading-relaxed text-sm sm:text-base">
-              Laporkan kasus intoleransi atau pelanggaran hak konstitusional untuk ditindaklanjuti
+              Konten video pendek edukatif tentang konstitusi dalam format menarik dan mudah dipahami
             </p>
           </Link>
         </motion.div>

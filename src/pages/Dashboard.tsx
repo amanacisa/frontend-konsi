@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Users, 
-  MessageCircle, 
-  FileText, 
-  TrendingUp, 
+import {
+  Users,
+  MessageCircle,
+  FileText,
+  TrendingUp,
   Plus,
   Edit,
   Trash2,
@@ -12,7 +12,10 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
-  BarChart3
+  BarChart3,
+  Video,
+  XCircle,
+  Play
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { newsAPI, reportsAPI, statsAPI } from '../services/api';
@@ -52,9 +55,22 @@ interface ReportItem {
   anonymous: boolean;
 }
 
+interface ShortFormContent {
+  id: string;
+  title: string;
+  description: string;
+  video_url: string;
+  author_name: string;
+  category: string;
+  views: number;
+  likes: number;
+  status: string;
+  created_at: string;
+}
+
 export default function Dashboard() {
   const { user, isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'news' | 'reports'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'news' | 'reports' | 'shortform'>('overview');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -66,6 +82,7 @@ export default function Dashboard() {
   });
   const [news, setNews] = useState<NewsItem[]>([]);
   const [reports, setReports] = useState<ReportItem[]>([]);
+  const [shortFormContents, setShortFormContents] = useState<ShortFormContent[]>([]);
   const [showNewsForm, setShowNewsForm] = useState(false);
   const [newsForm, setNewsForm] = useState({
     title: '',
@@ -85,17 +102,29 @@ export default function Dashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // Load news
       const newsResponse = await newsAPI.getAll({ limit: 10 });
       setNews(newsResponse.news || []);
-      
+
       // Load reports
       const reportsResponse = await reportsAPI.getAll({ limit: 10 });
       setReports(reportsResponse.reports || []);
-      
-      // Mock stats (in real app, create dedicated endpoint)
-       
+
+      // Load short form content
+      const API_URL = import.meta.env.VITE_BACKEND_API_URL;
+      const token = localStorage.getItem('token');
+      const shortFormResponse = await fetch(`${API_URL}/short-form?all=true&limit=50`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (shortFormResponse.ok) {
+        const shortFormData = await shortFormResponse.json();
+        setShortFormContents(shortFormData.contents || []);
+      }
+
+      // Load stats
       const statsResponse = await statsAPI.getAdminStats();
       // access the data property
       setStats(statsResponse.data || {
@@ -169,6 +198,52 @@ export default function Dashboard() {
     }
   };
 
+  const handleModerateShortForm = async (id: string, status: 'approved' | 'rejected', reason?: string) => {
+    try {
+      const API_URL = import.meta.env.VITE_BACKEND_API_URL;
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(`${API_URL}/short-form/${id}/moderate`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status, rejection_reason: reason })
+      });
+
+      if (!response.ok) throw new Error('Failed to moderate');
+
+      toast.success(`Konten berhasil ${status === 'approved' ? 'disetujui' : 'ditolak'}`);
+      loadDashboardData();
+    } catch (error) {
+      toast.error('Gagal memproses moderasi');
+    }
+  };
+
+  const handleDeleteShortForm = async (id: string) => {
+    if (window.confirm('Yakin ingin menghapus konten ini?')) {
+      try {
+        const API_URL = import.meta.env.VITE_BACKEND_API_URL;
+        const token = localStorage.getItem('token');
+
+        const response = await fetch(`${API_URL}/short-form/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to delete');
+
+        toast.success('Konten berhasil dihapus');
+        loadDashboardData();
+      } catch (error) {
+        toast.error('Gagal menghapus konten');
+      }
+    }
+  };
+
   if (!isAdmin) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -210,7 +285,8 @@ export default function Dashboard() {
             {[
               { id: 'overview', label: 'Overview', icon: BarChart3 },
               { id: 'news', label: 'Berita', icon: FileText },
-              { id: 'reports', label: 'Laporan', icon: MessageCircle }
+              { id: 'reports', label: 'Laporan', icon: MessageCircle },
+              { id: 'shortform', label: 'Video', icon: Video }
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -553,6 +629,124 @@ export default function Dashboard() {
               </table>
             </div>
           </div>
+        </motion.div>
+      )}
+
+      {/* Short Form Tab */}
+      {activeTab === 'shortform' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-semibold text-neutral-900">Moderasi Konten Video</h2>
+              <p className="text-sm text-neutral-600 mt-1">Review dan setujui konten video yang diupload user</p>
+            </div>
+            <div className="flex gap-2">
+              <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
+                {shortFormContents.filter(c => c.status === 'pending').length} Pending
+              </span>
+              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                {shortFormContents.filter(c => c.status === 'approved').length} Approved
+              </span>
+              <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                {shortFormContents.filter(c => c.status === 'rejected').length} Rejected
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {shortFormContents.map((content) => (
+              <div key={content.id} className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div className="relative aspect-[9/16] bg-black">
+                  <video
+                    src={content.video_url}
+                    className="w-full h-full object-contain"
+                    controls
+                  />
+                  <div className="absolute top-2 right-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      content.status === 'pending' ? 'bg-orange-500 text-white' :
+                      content.status === 'approved' ? 'bg-green-500 text-white' :
+                      'bg-red-500 text-white'
+                    }`}>
+                      {content.status}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  <h3 className="font-semibold text-neutral-900 mb-1 line-clamp-2">
+                    {content.title}
+                  </h3>
+                  <p className="text-sm text-neutral-600 mb-2 line-clamp-2">
+                    {content.description}
+                  </p>
+
+                  <div className="flex items-center justify-between text-xs text-neutral-500 mb-3">
+                    <span>@{content.author_name}</span>
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-3 h-3" />
+                      {content.views}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs text-neutral-500 mb-3">
+                    <span className="px-2 py-1 bg-neutral-100 rounded">
+                      {content.category}
+                    </span>
+                    <span>
+                      {new Date(content.created_at).toLocaleDateString('id-ID')}
+                    </span>
+                  </div>
+
+                  {content.status === 'pending' && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleModerateShortForm(content.id, 'approved')}
+                        className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Setujui
+                      </button>
+                      <button
+                        onClick={() => {
+                          const reason = prompt('Alasan penolakan (opsional):');
+                          handleModerateShortForm(content.id, 'rejected', reason || undefined);
+                        }}
+                        className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        Tolak
+                      </button>
+                    </div>
+                  )}
+
+                  {content.status !== 'pending' && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleDeleteShortForm(content.id)}
+                        className="flex-1 bg-neutral-500 hover:bg-neutral-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Hapus
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {shortFormContents.length === 0 && (
+            <div className="text-center py-12 bg-white rounded-2xl">
+              <Video className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-neutral-600 mb-2">Belum ada konten</h3>
+              <p className="text-neutral-500">Konten video akan muncul di sini untuk direview</p>
+            </div>
+          )}
         </motion.div>
       )}
     </div>
